@@ -38,7 +38,7 @@ stages {
 //      steps{
 //        script {
 //          docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
-//            dockerImage.push("1.1.1")
+//            dockerImage.push("latest")
 //          }
 //        }
 //      }
@@ -48,7 +48,7 @@ stages {
 //		stage('Build image') {
 
 //			steps {
-//				sh 'docker build -t mohamedamineblibech/crudapp:1.1.1 .'
+//				sh 'docker build -t assc/odoo:latest .'
 //			}
 //		}
 
@@ -58,7 +58,7 @@ stages {
 //			steps {
 //        script {
 //            docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
-//            dockerImage.push("1.1.1")
+//            dockerImage.push("latest")
 //	  }
 //			}
 //		}
@@ -73,7 +73,7 @@ stages {
     stage('Deploying App to Kubernetes') {
       steps {
         script {
-          kubernetesDeploy(configs: "deployment.yml", kubeconfigId: "kubernetes")
+          kubernetesDeploy(configs: "deploy.yaml", kubeconfigId: "kubernetes")
         }
       }
     }
