@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
       - name: odoo
-        image: assc/odoo-account:latest
+        image: assc/odoo-container:latest
         env:
         - name: HOST
           value: db
