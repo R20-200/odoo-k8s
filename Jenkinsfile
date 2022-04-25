@@ -48,7 +48,7 @@ stages {
 //		stage('Build image') {
 
 //			steps {
-//				sh 'docker build -t assc/odoo:latest .'
+//				sh 'docker build -t assc/odoo-container:latest .'
 //			}
 //		}
 
@@ -73,7 +73,7 @@ stages {
     stage('Deploying App to Kubernetes') {
       steps {
         script {
-          kubernetesDeploy(configs: "deploy.yaml", kubeconfigId: "kubernetes")
+          kubernetesDeploy(configs: "deploy-odoo.yaml", kubeconfigId: "kubernetes")
         }
       }
     }
