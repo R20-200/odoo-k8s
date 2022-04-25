@@ -1,79 +1,40 @@
-pipeline {
-//      environment {
-//	registryCredential = 'dockerhublogin'
-//          }
+pipeline{
 
 	agent any
 
 
-stages {
-  stage('checkout source') {
-             steps{
-                git url:'https://github.com/R20-200/odoo-k8s.git', branch:'main'
-             }
-  }
-  
-//	    stage('Maven Install') {
-//      agent {
-//        docker {
-//          image 'maven:3.5.0'
-//        }
-//      }
-//      steps {
-//        sh 'mvn clean install'
-//      }
-//    }
-  //stage('Build image') {
-  //  steps{
-  //    script {
-  //      dockerImage = docker.build dockerimagename
-  //    }
-  //   }
-  //  }
+	environment {
 
- //   stage('Pushing Image') {
- //     environment {
- //              registryCredential = 'dockerhublogin'
- //          }
-//      steps{
-//        script {
-//          docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
-//            dockerImage.push("latest")
-//          }
-//        }
-//      }
-//    }
- 
- 
-//		stage('Build image') {
+		DOCKERHUB_CREDENTIALS=credentials('assc2022')
 
-//			steps {
-//				sh 'docker build -t assc/odoo-container:latest .'
-//			}
-//		}
+		REGISTRY_ADDRESS = "https://hub.docker.com/repository/docker/assc2022/odoo"
 
+	}
 
-//		stage('Push image into docker hub') {
-//
-//			steps {
-//        script {
-//            docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
-//            dockerImage.push("latest")
-//	  }
-//			}
-//		}
-//	}
+	stages {
 
-//	post {
-//		always {
-//			sh 'docker logout'
-//		}
-//	}
+		stage('Login and setup') {
 
-    stage('Deploying App to Kubernetes') {
+			steps {
+
+	         sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+
+			}
+		}
+
+	stage('Build and push ') {
+
+			steps {
+
+         		 sh "chmod +x -R ${env.WORKSPACE}"
+
+    		     sh './build.sh'
+			}
+		}
+		stage('Deploying App to Kubernetes') {
       steps {
         script {
-          kubernetesDeploy(configs: "deploy-odoo.yaml", kubeconfigId: "kubernetes")
+          kubernetesDeploy(configs: "deployment.yml", kubeconfigId: "kubernetes")
         }
       }
     }
@@ -81,3 +42,4 @@ stages {
   }
 
 }
+        
