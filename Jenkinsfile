@@ -11,15 +11,16 @@ stages {
              }
   }
 
-    stage('Deploying App to Kubernetes') {
+     stage('Déployer application sur K8s Cluster') {
       steps {
-        script {
-          kubernetesDeploy(configs: "deploy-odoo.yaml", kubeconfigId: "kubernetes")
-        }
-      }
+       
+        echo "L'étape actuelle est deployement"
+       kubernetesDeploy(
+        configs: "deploy-odoo.yaml",
+        kubeconfigId: 'kubernetes',
+         enableConfigSubstitution : true
+         )
+      }   
     }
-
-  }
-
 }
-        
+}
