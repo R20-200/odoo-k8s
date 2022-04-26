@@ -18,7 +18,7 @@ stages {
         kubernetesDeploy(
                                 credentialsType: 'KubeConfig',
                                 kubeConfig: [path: '/var/lib/jenkins/deploy-odoo/.kube/config'],
-                                configs: 'deploy-odoo.yml', kubeconfigId: 'kubernetes',
+                                configs: 'deploy-odoo.yaml', kubeconfigId: 'kubernetes',
          )
       }   
     }
