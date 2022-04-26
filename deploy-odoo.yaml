@@ -1,66 +1,183 @@
+
+ ---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: odoo
+  labels:
+    name: odoo
 ---
 apiVersion: v1
-kind: Pod
+kind: Service
 metadata:
-  name: my-pod
+  name: odoo-db
+  namespace: odoo
   labels:
-    type: reactnode
+    app: odoo-shop
 spec:
-  containers:
-  - name: crud-container
-    image: mohamedamineblibech/crudapp:1.1.1
-    ports:
-      - name: crud-container
-        containerPort: 3000
-        targetPort: 80
-
-
-
-#4 elts principale apiVersion ,kind(pod [[restart auto ]], Replicaset[[si node down replicat auto sur une autre node]],Deploiment[[]]),metadata[[dictionaire ]],spec[[specification:template of containers]]
+  ports:
+    - port: 5432
+  selector:
+    app: odoo-shop
+    tier: backend
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-deployment
+  name: odoo-db   
+  namespace: odoo
   labels:
-    type: rs
+    app: odoo-shop
 spec:
-  replicas: 7
-  template:
-    metadata:
-      name: my-pod
-      labels:
-        type: reactnode
-    spec:
-        containers:
-        - name: crud-container
-          image: mohamedamineblibech/crudapp:1.1.1
-          ports:
-            - name: crud-container
-              containerPort: 3000
-              targetPort: 80
-#gere les objet nouvellement cree 
+  replicas: 3
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      type: reactnode 
-      
+      app: odoo-shop
+  template:
+    metadata:
+      labels:
+        app: odoo-shop
+        tier: backend
+    spec:
+      containers:
+      - image: postgres:latest
+        name: odoo-db
+        env:
+        - name: POSTGRES_DB
+          value: postgres
+        - name: POSTGRES_USER
+          value: odoo
+        - name: POSTGRES_PASSWORD
+          value: password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+        - containerPort: 5432
+          name: odoo-db
+        volumeMounts:
+        - name: odoo-db-pvc
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: odoo-db-pvc
+        persistentVolumeClaim:
+          claimName: odoo-db-pvc
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-service
+  name: odoo-shop
+  namespace: odoo
+  labels:
+    app: odoo-shop
 spec:
-  type: NodePort
   ports:
-#port of container inside pod
-  - targetPort: 3000
-#port de service prend flux 3000 redirection vers port du pod
-    port: 80
-#port phy 3ibaratan map 3000 redirger vers port du service 80
-    nodePort: 30000
-#ya3ref les pods ili na7ki a3lihom ->label pod
+    - port: 8069
   selector:
-    type: reactnode
-
-
+    app: odoo-shop
+    tier: frontend
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo-shop
+  namespace: odoo
+  labels:
+    app: odoo-shop
+spec:
+  replicas: 3
+  strategy: 
+    type: Recreate
+  selector:
+    matchLabels:
+      app: odoo-shop
+  template:
+    metadata:
+      labels:
+        app: odoo-shop
+        tier: frontend
+    spec:
+      containers:
+        - image: odoo:latest
+          name: odoo
+          env:
+          - name: POSTGRES_DB
+            value: postgres
+          - name: HOST
+            value: odoo-db
+          - name: USER
+            value: odoo
+          - name: PASSWORD
+            value: password
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          ports:
+            - containerPort: 8069
+              name: odoo
+          volumeMounts:
+          - name: odoo-pvc
+            mountPath: /var/lib/odoo
+      volumes:
+      - name: odoo-pvc
+        persistentVolumeClaim:
+          claimName: odoo-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0001
+  labels:
+    type: local
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /data/pv0001/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0002
+  labels:
+    type: local
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /data/pv0002/
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: odoo-pvc
+  namespace: odoo
+  labels:
+    app: odoo-shop
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: odoo-db-pvc
+  namespace: odoo
+  labels:
+    app: odoo-shop
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
