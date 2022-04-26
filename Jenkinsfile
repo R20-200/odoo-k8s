@@ -1,29 +1,28 @@
 pipeline {
 
-  environment {
-    dockerimagename = "thetips4you/nodeapp"
-    dockerImage = ""
+
+	agent any
+
+
+stages {
+  stage('checkout source') {
+             steps{
+                git url:'https://github.com/R20-200/odoo-k8s.git', branch:'main'
+             }
   }
 
-  agent any
-
-  stages {
-
-    stage('Checkout Source') {
+     stage('Déployer application sur K8s Cluster') {
       steps {
-        git 'https://github.com/R20-200/odoo-k8s.git'
-      }
+       
+        echo "L'étape actuelle est deployement"
+      kubernetesDeploy(
+        configs: "deploy-service.yaml",
+        kubeconfigId: 'kubernetes',
+         enableConfigSubstitution : true
+        )
+         )
+      }   
     }
-
-    stage('Deploying App to Kubernetes') {
-      steps {
-        script {
-          kubernetesDeploy(configs: "deploy-service.yaml", kubeconfigId: "kubernetes")
-        }
-      }
-    }
-
-  }
-
+}
 }
 
