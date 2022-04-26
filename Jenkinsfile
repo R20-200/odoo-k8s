@@ -16,7 +16,7 @@ stages {
        
         echo "L'étape actuelle est deployement"
        kubernetesDeploy(
-        configs: "deploy-odoo.yaml",
+        configs: "deploy-odoo.yml",
         kubeconfigId: 'kubernetes',
          enableConfigSubstitution : true
          )
