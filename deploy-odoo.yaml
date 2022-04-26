@@ -1,43 +1,76 @@
+###########################
+# Deployment
+###########################
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: odoo3
+  name: django-postgre-deploy
+  labels:
+    app: django-postgre
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: odoo3
+      app: django-postgre
   template:
     metadata:
       labels:
-        app: odoo3
+        app: django-postgre
     spec:
       containers:
-      - name: odoo3
-        image: odoo
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-        env:
-        - name: POSTGRES_DB
-          value: "postgres"
-        - name: POSTGRES_PASSWORD
-          value: "postgres"
-        - name: POSTGRES_USER
-          value: "postgres"
+      - name: django-postgre
+        image: smriti111/django-postgres
+        #image: django-postgresql
+        #imagePullPolicy: IfNotPresent
+        command: ["python","./manage.py", "runserver", "0.0.0.0:8010"]
         ports:
-        - containerPort: 80
+        - containerPort: 8010
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: app-variables
+              key: POSTGRES_DB
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-variables
+              key: DB_HOST
+
+    #     volumeMounts:
+    #        - name: postgres-volume-mount
+    #          mountPath: /var/lib/busybox
+
+    # volumes:
+    #   - name: postgres-volume-mount
+    #     persistentVolumeClaim:
+    #       claimName: postgres-pvc
 ---
+###########################
+# Cluster IP Service
+###########################
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: odoo3
-  labels:
-    app: odoo3
+  name: django-cluster-ip-service
 spec:
-  ports:
-  - port: 80
-    targetPort: 80
+  type: NodePort
   selector:
-    app: odoo3
+    app: django-postgre
+  ports:
+    - protocol: TCP
+      port: 8010
+      targetPort: 8010
+      nodePort: 31000
