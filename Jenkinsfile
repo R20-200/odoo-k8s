@@ -15,10 +15,11 @@ stages {
       steps {
        
         echo "L'étape actuelle est deployement"
-        kubernetesDeploy(
-                                credentialsType: 'KubeConfig',
-                                kubeConfig: [path: '/var/lib/jenkins/deploy-odoo/.kube/config'],
-                                configs: 'deploy-odoo.yaml', kubeconfigId: 'kubernetes',
+       kubernetesDeploy(
+                    configs: 'deploy-odoo.yaml',
+                    kubeconfigId: 'Kubeconfig',
+                    enableConfigSubstitution: true
+        )
          )
       }   
     }
