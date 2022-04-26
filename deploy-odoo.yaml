@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -61,3 +62,5 @@ spec:
 #ya3ref les pods ili na7ki a3lihom ->label pod
   selector:
     type: reactnode
+
+
