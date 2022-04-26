@@ -20,7 +20,7 @@ spec:
       - name: nodeserver
         image: odoo:latest
         ports:
-        - containerPort: 3000
+        - containerPort: 8069
         
         
 ---
@@ -32,9 +32,9 @@ metadata:
 spec:
   selector:
     app: nodeapp 
-  type: LoadBalancer
+  type: loadbalencer
   ports:
   - protocol: TCP
-    port: 5000
-    targetPort: 3000
-    nodePort: 31110
+    port: 8069
+    targetPort: 8069
+   
