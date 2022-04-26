@@ -1,5 +1,5 @@
 
- ---
+---
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -25,17 +25,13 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: odoo-db   
+  name: odoo-db
   namespace: odoo
   labels:
     app: odoo-shop
 spec:
-  replicas: 3
   strategy:
     type: Recreate
-  selector:
-    matchLabels:
-      app: odoo-shop
   template:
     metadata:
       labels:
@@ -43,11 +39,9 @@ spec:
         tier: backend
     spec:
       containers:
-      - image: postgres:latest
+      - image: postgres:9.4
         name: odoo-db
         env:
-        - name: POSTGRES_DB
-          value: postgres
         - name: POSTGRES_USER
           value: odoo
         - name: POSTGRES_PASSWORD
@@ -88,12 +82,8 @@ metadata:
   labels:
     app: odoo-shop
 spec:
-  replicas: 3
-  strategy: 
+  strategy:
     type: Recreate
-  selector:
-    matchLabels:
-      app: odoo-shop
   template:
     metadata:
       labels:
@@ -101,13 +91,9 @@ spec:
         tier: frontend
     spec:
       containers:
-        - image: odoo:latest
-          name: odoo
+        - image: codeflavor/odoo-docker:latest
+          name: odoo-shop
           env:
-          - name: POSTGRES_DB
-            value: postgres
-          - name: HOST
-            value: odoo-db
           - name: USER
             value: odoo
           - name: PASSWORD
@@ -138,7 +124,7 @@ spec:
   capacity:
     storage: 5Gi
   hostPath:
-    path: /data/pv0001/
+    path: /tmp/pv0001/
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -152,7 +138,7 @@ spec:
   capacity:
     storage: 5Gi
   hostPath:
-    path: /data/pv0002/
+    path: /tmp/pv0002/
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
