@@ -1,139 +1,63 @@
----
 apiVersion: v1
-kind: Service
+kind: Pod
 metadata:
-  name: odoo-db
+  name: my-pod
   labels:
-    app: odoo-shop
+    type: reactnode
 spec:
-  ports:
-    - port: 5432
-  selector:
-    app: odoo-shop
-    tier: backend
-  type: NodePort
+  containers:
+  - name: crud-container
+    image: mohamedamineblibech/crudapp:1.1.1
+    ports:
+      - name: crud-container
+        containerPort: 3000
+        targetPort: 80
+
+
+
+#4 elts principale apiVersion ,kind(pod [[restart auto ]], Replicaset[[si node down replicat auto sur une autre node]],Deploiment[[]]),metadata[[dictionaire ]],spec[[specification:template of containers]]
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: odoo-db
+  name: my-deployment
   labels:
-    app: odoo-shop
+    type: rs
 spec:
-  strategy:
-    type: Recreate
-     selector:
-    matchLabels:
-      app: odoo-shop
+  replicas: 7
   template:
     metadata:
+      name: my-pod
       labels:
-        app: odoo-shop
-        tier: backend
+        type: reactnode
     spec:
-      containers:
-      - image: postgres:9.4
-        name: odoo-db
-        env:
-        - name: POSTGRES_USER
-          value: odoo
-        - name: POSTGRES_PASSWORD
-          value: odoo
-        - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
-        ports:
-        - containerPort: 5432
-          name: odoo-db
-        volumeMounts:
-        - name: odoo-db-pvc
-          mountPath: /var/lib/postgresql/data
-      volumes:
-      - name: odoo-db-pvc
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: odoo-shop
-  labels:
-    app: odoo-shop
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8069
-  selector:
-    app: odoo-shop
----
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: odoo-addons
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/extra-addons"
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: odoo-addons-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: odoo-shop
-  labels:
-    app: odoo-shop
-spec:
-  strategy:
-    type: Recreate
-      selector:
-    matchLabels:
-      app: odoo-shop
-  template:
-    metadata:
-      labels:
-        app: odoo-shop
-        tier: frontend
-    spec:
-      containers:
-        - image: odoo:10.0
-          name: odoo-shop
-          env:
-          - name: USER
-            value: odoo
-          - name: PASSWORD
-            value: odoo
-          - name: HOST
-            value: odoo-db
-          securityContext:
-            privileged: true
-            runAsUser: 0
+        containers:
+        - name: crud-container
+          image: mohamedamineblibech/crudapp:1.1.1
           ports:
-            - containerPort: 8069
-              name: odoo
-          volumeMounts:
-          - name: odoo-pvc
-            mountPath: /var/lib/odoo
-          - name: odoo-addons-space
-            mountPath: /mnt/extra-addons
-      volumes:
-      - name: odoo-pvc
-        emptyDir: {}
-      - name: odoo-addons-space
-        persistentVolumeClaim:
-         claimName: odoo-addons-claim
+            - name: crud-container
+              containerPort: 3000
+              targetPort: 80
+#gere les objet nouvellement cree 
+  selector:
+    matchLabels:
+      type: reactnode 
+      
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  ports:
+#port of container inside pod
+  - targetPort: 3000
+#port de service prend flux 3000 redirection vers port du pod
+    port: 80
+#port phy 3ibaratan map 3000 redirger vers port du service 80
+    nodePort: 30000
+#ya3ref les pods ili na7ki a3lihom ->label pod
+  selector:
+    type: reactnode
