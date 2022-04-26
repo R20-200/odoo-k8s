@@ -1,76 +1,89 @@
 ###########################
+# Persistent Volume Claim
+###########################
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-pvc
+  # labels:
+  #   type: local
+spec:
+  #storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200M 
+ # volumeName: postgres-pv
+
+---
+###########################
 # Deployment
 ###########################
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: django-postgre-deploy
-  labels:
-    app: django-postgre
+  name: postgres-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: django-postgre
+      app: postgres-container
   template:
     metadata:
       labels:
-        app: django-postgre
+        app: postgres-container
+        tier: backend
     spec:
       containers:
-      - name: django-postgre
-        image: smriti111/django-postgres
-        #image: django-postgresql
-        #imagePullPolicy: IfNotPresent
-        command: ["python","./manage.py", "runserver", "0.0.0.0:8010"]
-        ports:
-        - containerPort: 8010
-        env:
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: user
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: password
-        - name: POSTGRES_DB
-          valueFrom:
-            configMapKeyRef:
-              name: app-variables
-              key: POSTGRES_DB
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-variables
-              key: DB_HOST
+        - name: postgres-container
+          image: postgres
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: user
 
-    #     volumeMounts:
-    #        - name: postgres-volume-mount
-    #          mountPath: /var/lib/busybox
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
 
-    # volumes:
-    #   - name: postgres-volume-mount
-    #     persistentVolumeClaim:
-    #       claimName: postgres-pvc
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-variables
+                  key: POSTGRES_DB
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-volume-mount
+              mountPath: /var/lib/postgresql/data
+
+      volumes:
+        - name: postgres-volume-mount
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
 ---
 ###########################
 # Cluster IP Service
 ###########################
 
-apiVersion: v1
+
 kind: Service
+apiVersion: v1
 metadata:
-  name: django-cluster-ip-service
+  name: postgres-cluster-ip-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
-    app: django-postgre
+    app: postgres-container
   ports:
     - protocol: TCP
-      port: 8010
-      targetPort: 8010
-      nodePort: 31000
+      port: 5432
+      targetPort: 5432
