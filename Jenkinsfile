@@ -15,27 +15,6 @@ pipeline {
       }
     }
 
-    stage('Build image') {
-      steps{
-        script {
-          dockerImage = docker.build dockerimagename
-        }
-      }
-    }
-
-    stage('Pushing Image') {
-      environment {
-               registryCredential = 'dockerhublogin'
-           }
-      steps{
-        script {
-          docker.withRegistry( 'https://hub.docker.com/repository/docker/assc2022/odoo, registryCredential ) {
-            dockerImage.push("latest")
-          }
-        }
-      }
-    }
-
     stage('Deploying App to Kubernetes') {
       steps {
         script {
