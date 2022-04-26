@@ -1,5 +1,34 @@
-
----
+apiVersion: v1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod
+  namespace: odoo
+spec:
+ volumes:
+      - name: odoo-db-pvc
+        persistentVolumeClaim:
+          claimName: odoo-db-pvc
+     emptyDir: {}
+  containers:
+  - name: odoo-db
+    image: postgres:latest
+    volumeMounts:
+    - name: odoo-db-pvc
+      mountPath: /var/lib/postgresql/data
+  - name: odoo-shop
+    image: odoo:latest
+    volumeMounts:
+    - name: odoo-pvc
+        persistentVolumeClaim:
+          claimName: odoo-pvc
+    command: ["/bin/sh", "-c"]
+    args:
+      - while true; do
+          date >> /html/index.html;
+          sleep 1;
+        done
+        ---
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -25,13 +54,17 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: odoo-db
+  name: odoo-db    juste la7dha naraha fil
   namespace: odoo
   labels:
     app: odoo-shop
 spec:
+  replicas: 3
   strategy:
     type: Recreate
+  selector:
+    matchLabels:raw deployment hedhi mjarbetha  w mchet 
+      app: odoo-shop
   template:
     metadata:
       labels:
@@ -39,9 +72,11 @@ spec:
         tier: backend
     spec:
       containers:
-      - image: postgres:9.4
+      - image: postgres:latest
         name: odoo-db
         env:
+        - name: POSTGRES_DB
+          value: postgres
         - name: POSTGRES_USER
           value: odoo
         - name: POSTGRES_PASSWORD
@@ -82,8 +117,12 @@ metadata:
   labels:
     app: odoo-shop
 spec:
-  strategy:
+  replicas: 3
+  strategy: 
     type: Recreate
+  selector:
+    matchLabels:
+      app: odoo-shop
   template:
     metadata:
       labels:
@@ -91,9 +130,13 @@ spec:
         tier: frontend
     spec:
       containers:
-        - image: codeflavor/odoo-docker:latest
-          name: odoo-shop
+        - image: odoo:latest
+          name: odoo
           env:
+          - name: POSTGRES_DB
+            value: postgres
+          - name: HOST
+            value: odoo-db
           - name: USER
             value: odoo
           - name: PASSWORD
@@ -124,7 +167,7 @@ spec:
   capacity:
     storage: 5Gi
   hostPath:
-    path: /tmp/pv0001/
+    path: /data/pv0001/
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -138,7 +181,7 @@ spec:
   capacity:
     storage: 5Gi
   hostPath:
-    path: /tmp/pv0002/
+    path: /data/pv0002/
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -167,3 +210,4 @@ spec:
   resources:
     requests:
       storage: 5Gi
+--------------
